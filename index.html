@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Xác nhận thông tin học sinh – P20 STUDY</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;background:#f5f5f3;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px 16px}
+  .card{background:#fff;border-radius:16px;padding:36px 32px;width:100%;max-width:440px;border:.5px solid #e0ded6}
+  .logo{font-size:13px;font-weight:600;letter-spacing:.08em;color:#888;text-transform:uppercase;margin-bottom:6px}
+  h1{font-size:22px;font-weight:600;color:#1a1a18;margin-bottom:6px;line-height:1.3}
+  .subtitle{font-size:14px;color:#888;margin-bottom:28px;line-height:1.5}
+  .field{margin-bottom:16px}
+  label{display:block;font-size:13px;font-weight:500;color:#555;margin-bottom:6px}
+  input{width:100%;padding:11px 14px;border:.5px solid #d0cec6;border-radius:10px;font-size:15px;color:#1a1a18;background:#fafaf8;outline:none;transition:border-color .15s}
+  input:focus{border-color:#666;background:#fff}
+  input::placeholder{color:#bbb}
+  button{width:100%;margin-top:8px;padding:13px;background:#1a1a18;color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:500;cursor:pointer;transition:background .15s}
+  button:hover{background:#333}
+  button:active{background:#000;transform:scale(.99)}
+  .result{margin-top:20px;padding:18px 20px;border-radius:12px;display:none}
+  .result.success{background:#f0faf4;border:.5px solid #a8dfc0;display:block}
+  .result.error{background:#fff4f4;border:.5px solid #f5b8b8;display:block}
+  .result-icon{font-size:28px;margin-bottom:10px}
+  .result-name{font-size:17px;font-weight:600;color:#1a1a18;margin-bottom:6px}
+  .result-class{display:inline-block;font-size:13px;font-weight:600;padding:3px 10px;border-radius:20px;margin-bottom:10px}
+  .class-r73{background:#e8eeff;color:#3355cc}
+  .class-n42{background:#fff0e8;color:#c05010}
+  .result-msg{font-size:14px;color:#2d7a4f;line-height:1.5}
+  .result.error .result-msg{color:#c03030}
+  .hint{font-size:12px;color:#bbb;text-align:center;margin-top:20px}
+  .db-status{font-size:11px;color:#bbb;text-align:right;margin-top:8px}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="logo">P20 STUDY</div>
+  <h1>Xác nhận thông tin</h1>
+  <p class="subtitle">Nhập họ tên và số CCCD để kiểm tra thông tin đã được ghi nhận.</p>
+  <div class="field">
+    <label for="inp-name">Họ và tên</label>
+    <input id="inp-name" type="text" placeholder="Nguyễn Văn A" autocomplete="name" />
+  </div>
+  <div class="field">
+    <label for="inp-cccd">Số CCCD (12 chữ số)</label>
+    <input id="inp-cccd" type="text" inputmode="numeric" maxlength="12" placeholder="012345678901" />
+  </div>
+  <button id="btn" onclick="check()">Kiểm tra</button>
+  <div class="result" id="result">
+    <div class="result-icon" id="res-icon"></div>
+    <div class="result-name" id="res-name"></div>
+    <div id="res-class"></div>
+    <div class="result-msg" id="res-msg"></div>
+  </div>
+  <p class="db-status" id="db-status">Đang tải…</p>
+  <p class="hint">Chỉ nhập đúng thông tin của bản thân em.</p>
+</div>
+
+<script>
+const SHEET_URL = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRns_5D67LaQEaGGxuXX3SV9rgCFo_s6EnuPzBmEOCJWPjQ5EAfmgoRUPqwlrojMUlUGrsL5SjzjNSH/pub?gid=850674522&single=true&output=csv';
+const STATIC_DB = [{"n":"Vũ Nhật Đức","c":"012209007145","l":"R73"},{"n":"Hoàng Minh Hải","c":"001209023122","l":"R73"},{"n":"Nguyễn Hoàng Khải","c":"034209002517","l":"R73"},{"n":"Nguyễn Thị Ánh Dương","c":"026309003570","l":"R73"},{"n":"Đào Thiện Phú","c":"026209007306","l":"R73"},{"n":"Trần Nguyễn Quốc Pháp","c":"036209017240","l":"R73"},{"n":"Đoàn Phú An","c":"036209006524","l":"R73"},{"n":"Nguyễn Cường","c":"001209050558","l":"R73"},{"n":"Nguyễn Đức Phú","c":"026209010690","l":"R73"},{"n":"Lê Anh Hoàng","c":"036209012720","l":"R73"},{"n":"Lê Gia Vũ","c":"001209033916","l":"R73"},{"n":"Trần Quang Minh","c":"001209051665","l":"R73"},{"n":"Phạm Vũ Minh Long","c":"036209005165","l":"R73"},{"n":"Lê Hà Anh","c":"026309010426","l":"R73"},{"n":"Vũ Hữu Minh Trí","c":"001209024703","l":"R73"},{"n":"Trần Duy An","c":"001209005210","l":"R73"},{"n":"Vũ Minh Tuấn","c":"019209012704","l":"R73"},{"n":"Vũ Huy Hoàng","c":"001209061984","l":"R73"},{"n":"Nguyễn Đoàn Duy Phong","c":"001209028333","l":"R73"},{"n":"Nguyễn Ngọc Anh Duy","c":"027209007201","l":"R73"},{"n":"Phạm Tuấn Bảo","c":"001209036376","l":"R73"},{"n":"Phan Nhật Anh","c":"026210003201","l":"R73"},{"n":"Nguyễn Thế Minh","c":"001209041283","l":"R73"},{"n":"Nguyễn Trọng Thành","c":"022209011201","l":"R73"},{"n":"Ngô Duy Hưng","c":"022209008004","l":"R73"},{"n":"Lê Tiến Đạt","c":"031209016347","l":"R73"},{"n":"Hoàng Việt Tú","c":"026209013085","l":"R73"},{"n":"Mai Tiến Đạt","c":"030209002873","l":"R73"},{"n":"Hoàng Đức Thanh","c":"030209019275","l":"R73"},{"n":"Nguyễn Trần Bách","c":"031209001296","l":"R73"},{"n":"Trần Nhật Anh","c":"001209062901","l":"R73"},{"n":"Nguyễn Sỹ Minh","c":"001209052851","l":"R73"},{"n":"Hà Gia Bảo","c":"025209001933","l":"R73"},{"n":"Phan Bá Đức Anh","c":"026209007710","l":"R73"},{"n":"Nguyễn Trần Cát Uy","c":"026209002049","l":"R73"},{"n":"Phạm Đình Tú","c":"030209012580","l":"R73"},{"n":"Nguyễn Tuấn Hưng","c":"025209002556","l":"R73"},{"n":"Trịnh Quốc Nam","c":"025209003102","l":"R73"},{"n":"Đinh Tùng Lâm","c":"026209005200","l":"R73"},{"n":"Dương Hoà Bình","c":"001209026208","l":"R73"},{"n":"Phạm Tường Minh","c":"030209009113","l":"R73"},{"n":"Vũ Anh Đức","c":"022209007127","l":"R73"},{"n":"Ngọ Duy Toàn","c":"038209002355","l":"R73"},{"n":"Lê Nguyễn Phúc Thành","c":"001209031814","l":"R73"},{"n":"Nguyễn Văn Minh Đức","c":"034209027011","l":"R73"},{"n":"Hoàng Tuấn Long","c":"001209044959","l":"R73"},{"n":"Phạm Gia Hưng","c":"036209015262","l":"R73"},{"n":"Vũ Thuỳ Dương","c":"001309043089","l":"R73"},{"n":"Đỗ Huyền Trang","c":"026309001265","l":"R73"},{"n":"Cung Đỗ Quỳnh Nhi","c":"001309044995","l":"R73"},{"n":"Bùi Lê Huy","c":"026209001030","l":"R73"},{"n":"Hà Nguyên Đức","c":"031209006283","l":"R73"},{"n":"Dương Anh Tú","c":"026209007811","l":"R73"},{"n":"Nguyễn Thuỳ Linh","c":"022309009873","l":"R73"},{"n":"Nguyễn Việt Nhân","c":"026209007716","l":"R73"},{"n":"Đại Thanh Tú","c":"026309004429","l":"R73"},{"n":"Hồ Xuân Hùng","c":"040210027740","l":"R73"},{"n":"Bùi Gia Bảo","c":"001209038245","l":"R73"},{"n":"Vũ Hải Lâm","c":"025209005637","l":"R73"},{"n":"Đinh Quốc Tuấn","c":"037209010230","l":"R73"},{"n":"Lê Minh Phúc","c":"026209007231","l":"R73"},{"n":"Vũ Tiến Dũng","c":"031209012321","l":"R73"},{"n":"Phạm Chấn Phong","c":"031209009927","l":"R73"},{"n":"Trần Quỳnh Dương","c":"031309005942","l":"R73"},{"n":"Lê Anh Nam","c":"031209020203","l":"R73"},{"n":"Bùi Hoàng Tuấn Đạt","c":"031209016204","l":"R73"},{"n":"Phạm Đức Việt","c":"031209004248","l":"R73"},{"n":"Vũ Hoàng Anh","c":"026209007485","l":"R73"},{"n":"Lê Bá Minh Vương","c":"093209003508","l":"R73"},{"n":"Hoàng Long Hải","c":"031209005515","l":"R73"},{"n":"Bùi Đức Anh","c":"031209003780","l":"R73"},{"n":"Nguyễn Đình Anh Phước","c":"056209006897","l":"R73"},{"n":"Nguyễn Quang Huy","c":"026209010525","l":"R73"},{"n":"Trử Thành Quang","c":"001209034649","l":"R73"},{"n":"Hoàng Tiến Hưng","c":"031209007645","l":"R73"},{"n":"Trịnh Thanh Lâm","c":"030209018190","l":"R73"},{"n":"Phạm Gia Huy","c":"031209003045","l":"R73"},{"n":"Trần Đức Anh","c":"004209006963","l":"R73"},{"n":"Trần Tùng Anh","c":"003020901590","l":"R73"},{"n":"Đỗ Văn Nam","c":"026210001998","l":"N42"},{"n":"Lê Đức Toàn","c":"026210011105","l":"N42"},{"n":"Nguyễn Trung Hiếu","c":"033210002704","l":"N42"},{"n":"Nguyễn Dương Hùng","c":"001210052719","l":"N42"},{"n":"Cao Đức Quang","c":"026210009767","l":"N42"},{"n":"Trần Sơn Hải","c":"001210003100","l":"N42"},{"n":"Trần Hoàng Giang","c":"025210001991","l":"N42"},{"n":"Vũ Hà Tú Anh","c":"026310000019","l":"N42"},{"n":"Hoàng Quốc An","c":"026210010341","l":"N42"},{"n":"Nguyễn Dương Gia Bảo","c":"026210005068","l":"N42"},{"n":"Đinh Thái Sơn","c":"001210044391","l":"N42"},{"n":"Kim Hồng Sơn","c":"026210000754","l":"N42"},{"n":"Phạm Văn Huy","c":"037210008356","l":"N42"},{"n":"Phạm Phương Mai","c":"037310003561","l":"N42"},{"n":"Đinh Hoàng Tùng","c":"037210009622","l":"N42"},{"n":"Đỗ Thành Dũng","c":"037210004854","l":"N42"},{"n":"Nguyễn Ngọc Hà","c":"001310030179","l":"N42"},{"n":"Đinh Đức Huy","c":"037210006702","l":"N42"},{"n":"Kim Minh Đăng","c":"026210012080","l":"N42"},{"n":"Trần Minh Trung","c":"001210028945","l":"N42"},{"n":"Nguyễn Minh Hạnh","c":"001310000038","l":"N42"},{"n":"Đại Phương Hiếu","c":"026210000262","l":"N42"},{"n":"Nguyễn Duy Minh Dương","c":"040210011611","l":"N42"}];
+
+let DB = STATIC_DB;
+
+async function loadData() {
+  try {
+    const res = await fetch(SHEET_URL);
+    if (!res.ok) throw new Error('HTTP ' + res.status);
+    const text = await res.text();
+    const lines = text.trim().split('\n').slice(1);
+    const parsed = lines.map(line => {
+      const cols = line.split(',');
+      return { n:(cols[0]||'').trim().replace(/^"|"$/g,''), c:(cols[1]||'').trim().replace(/^"|"$/g,''), l:(cols[2]||'').trim().replace(/^"|"$/g,'') };
+    }).filter(r => r.n && /^\d{12}$/.test(r.c));
+    if (parsed.length > 0) {
+      DB = parsed;
+      document.getElementById('db-status').textContent = 'Dữ liệu mới nhất: ' + DB.length + ' học sinh';
+    } else {
+      throw new Error('empty');
+    }
+  } catch(e) {
+    DB = STATIC_DB;
+    document.getElementById('db-status').textContent = 'Dữ liệu tĩnh: ' + DB.length + ' học sinh';
+  }
+}
+
+function normName(s){ return s.trim().replace(/\s+/g,' ').toLowerCase(); }
+
+function check() {
+  const nameIn = document.getElementById('inp-name').value;
+  const cccdIn = document.getElementById('inp-cccd').value.trim();
+  if (!nameIn.trim() || !cccdIn) { show(false,'','','Vui lòng nhập đầy đủ họ tên và số CCCD.'); return; }
+  if (!/^\d{12}$/.test(cccdIn)) { show(false,'','','Số CCCD phải gồm đúng 12 chữ số.'); return; }
+  const key = normName(nameIn);
+  const match = DB.find(s => s.c === cccdIn && normName(s.n) === key);
+  if (match) {
+    show(true, match.n, match.l, 'Thông tin của em đã được nhập.');
+  } else {
+    const byCccd = DB.find(s => s.c === cccdIn);
+    const byName = DB.find(s => normName(s.n) === key);
+    let msg = 'Không tìm thấy thông tin. Có thể em chưa gửi CCCD cho anh/chị.';
+    if (byCccd) msg = 'Số CCCD khớp nhưng họ tên chưa chính xác.';
+    else if (byName) msg = 'Họ tên khớp nhưng số CCCD chưa đúng.';
+    show(false,'','',msg);
+  }
+}
+
+function show(ok, name, lop, msg) {
+  const res = document.getElementById('result');
+  res.className = 'result ' + (ok ? 'success' : 'error');
+  document.getElementById('res-icon').textContent = ok ? '✅' : '❌';
+  document.getElementById('res-name').textContent = ok ? name : '';
+  document.getElementById('res-class').innerHTML = ok ? '<span class="result-class class-'+lop.toLowerCase()+'">'+lop+'</span>' : '';
+  document.getElementById('res-msg').textContent = msg;
+}
+
+loadData();
+document.getElementById('inp-cccd').addEventListener('keydown', e => { if(e.key==='Enter') check(); });
+document.getElementById('inp-name').addEventListener('keydown', e => { if(e.key==='Enter') document.getElementById('inp-cccd').focus(); });
+</script>
+</body>
+</html>
